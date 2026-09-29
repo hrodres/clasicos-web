@@ -279,15 +279,22 @@ async function doSearch(instant){
 $("#q").addEventListener("input",()=>{clearTimeout(debounceT);debounceT=setTimeout(()=>doSearch(true),350)});
 $("#q").addEventListener("keydown",e=>{if(e.key==="Enter"){clearTimeout(debounceT);doSearch(false)}});
 
+function resultsFor(){
+  if(lastKey==="q") return doSearchAll(lastVal);
+  if(lastKey==="author") return BOOKS.filter(b=>(b.a||[]).includes(lastVal));
+  if(lastKey==="label") return BOOKS.filter(b=>(b.l||[]).includes(lastVal));
+  if(lastKey==="year") return BOOKS.filter(b=>b.y===Number(lastVal));
+  return [];
+}
 async function pageTo(delta){
   if(!lastKey||lastKey==="authors"||lastKey==="labels"||lastKey==="years")return;
-  const p=page+delta;
-  let res=[];
-  if(lastKey==="q") res=doSearchAll(lastVal);
+  const res=resultsFor();
   if(!res.length)return;
+  const p=Math.min(Math.max(1,page+delta),Math.ceil(res.length/PAGE_N));
   page=p;
   $("#content").innerHTML=cards(res.slice((p-1)*PAGE_N,p*PAGE_N));
   showPager(res.length,p);
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 $("#prev").onclick=()=>pageTo(-1);
 $("#next").onclick=()=>pageTo(1);
@@ -353,7 +360,7 @@ async function labels(){
   loading();
   const mp={};
   for(const b of BOOKS){for(const l of (b.l||[])){mp[l]=mp[l]||{name:l,n:0};mp[l].n++}}
-  const list=Object.values(mp).sort((x,y)=>y.n-x.n);
+  const list=Object.values(mp).filter(x=>x.n>0).sort((x,y)=>y.n-x.n);
   setCount(`<b>${list.length.toLocaleString("es-ES")}</b> géneros`);
   $("#content").innerHTML=`<div class="list">`+list.map(l=>`<a href="#" class="litem" data-act="label" data-val="${esc(l.name)}"><span class="nm">${esc(l.name)}</span><span style="display:flex;gap:9px;align-items:center"><span class="n">${l.n}</span><span class="chev">›</span></span></a>`).join("")+`</div>`;
   $("#pager").style.display="none";
@@ -372,7 +379,7 @@ async function years(){
   loading();
   const mp={};
   for(const b of BOOKS){const y=b.y;if(!y)continue;mp[y]=mp[y]||{year:y,n:0};mp[y].n++}
-  const list=Object.values(mp).sort((x,y)=>y.year-x.year);
+  const list=Object.values(mp).filter(x=>x.n>0).sort((x,y)=>y.year-x.year);
   setCount(`<b>${list.length.toLocaleString("es-ES")}</b> años`);
   $("#content").innerHTML=`<div class="list">`+list.map(y=>`<a href="#" class="litem" data-act="year" data-val="${y.year}"><span class="nm">${y.year}</span><span style="display:flex;gap:9px;align-items:center"><span class="n">${y.n}</span><span class="chev">›</span></span></a>`).join("")+`</div>`;
   $("#pager").style.display="none";
@@ -380,9 +387,10 @@ async function years(){
 async function byYear(y){
   lastKey="year";lastVal=y;page=1;
   loading();
-  const res=BOOKS.filter(b=>b.y===y);
+  const yy=Number(y);
+  const res=BOOKS.filter(b=>b.y===yy);
   $("#content").innerHTML=cards(res.slice(0,PAGE_N));
-  setCount(`<b>${y}</b> · <b>${res.length.toLocaleString("es-ES")}</b> obras`);
+  setCount(`<b>${yy}</b> · <b>${res.length.toLocaleString("es-ES")}</b> obras`);
   showPager(res.length,1);
   window.scrollTo({top:0,behavior:"smooth"});
 }
