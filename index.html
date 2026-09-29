@@ -210,6 +210,17 @@ function hashHue(s){let h=0;for(const c of String(s||"X"))h=(h*31+c.charCodeAt(0
 function coverStyle(s){const h=hashHue(s);return `background:linear-gradient(140deg,hsl(${h} 58% 46%),hsl(${(h+42)%360} 55% 34%))`}
 function initials(s){const w=String(s||"?").trim().split(/\s+/);return((w[0]||"")[0]||"")+((w[1]||"")[0]||"")}
 function yr(y){if(!y&&y!==0)return "";return y<0?`${-y} a.C.`:`${y}`}
+function bookDesc(b){
+  const parts=[];
+  if(b.t)parts.push(`«${b.t}»`);
+  if(b.a&&b.a.length)parts.push(b.a.join(", "));
+  if(b.y||b.y===0)parts.push(yr(b.y));
+  let s=parts.join(" — ")+".";
+  const g=(b.l||[]);
+  if(g.length)s+=` Géneros: ${g.join(", ")}.`;
+  if(b.p)s+=` ${b.p} páginas.`;
+  return s;
+}
 function skeleton(n){return '<div class="rows">'+Array.from({length:n||6},()=>'<div class="sk-row skel"></div>').join("")+"</div>"}
 function loading(){$("#count").textContent="";$("#content").innerHTML=skeleton(6);$("#pager").style.display="none"}
 
@@ -295,7 +306,7 @@ async function openBook(id){
 </div>
 </div></div>
 ${(b.l||[]).length?`<div class="chips">${b.l.map(l=>`<span>${esc(l)}</span>`).join("")}</div>`:""}
-<div class="desc">Obra de dominio público. Solo se muestra la ficha bibliográfica; no se distribuye el texto.</div>`;
+<div class="desc">${bookDesc(b)}<br><span style="opacity:.78;font-size:.88em">Obra de dominio público. Solo se muestran datos bibliográficos; no se distribuye el texto.</span></div>`;
   $("#modal").classList.add("open");document.body.style.overflow="hidden";
 }
 function closeModal(){$("#modal").classList.remove("open");document.body.style.overflow=""}
@@ -335,6 +346,7 @@ async function byAuthor(name){
   $("#content").innerHTML=cards(res.slice(0,PAGE_N));
   setCount(`<b>${esc(name)}</b> · <b>${res.length.toLocaleString("es-ES")}</b> obras`);
   showPager(res.length,1);
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 async function labels(){
   lastKey="labels";lastVal="";
@@ -353,6 +365,7 @@ async function byLabel(name){
   $("#content").innerHTML=cards(res.slice(0,PAGE_N));
   setCount(`<b>${esc(name)}</b> · <b>${res.length.toLocaleString("es-ES")}</b> obras`);
   showPager(res.length,1);
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 async function years(){
   lastKey="years";lastVal="";
@@ -371,6 +384,7 @@ async function byYear(y){
   $("#content").innerHTML=cards(res.slice(0,PAGE_N));
   setCount(`<b>${y}</b> · <b>${res.length.toLocaleString("es-ES")}</b> obras`);
   showPager(res.length,1);
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 function setTab(t){
   document.querySelectorAll(".bnav button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
